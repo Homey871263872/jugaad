@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search for Movies/TV Shows</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #262626;
+            margin: 0;
+            padding: 0;
+            overflow-y: scroll; /* Remove vertical scrollbar */
+        }
+
+        body::-webkit-scrollbar {
+            display: none;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+            color: #e3e3e3;
+        }
+
+        form {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        input[type="text"] {
+            padding: 8px;
+            font-size: 16px;
+            width: 300px;
+        }
+
+        button {
+            padding: 8px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #searchResults {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .media {
+            margin: 10px;
+            padding: 10px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            width: 300px;
+            position: relative;
+            overflow: hidden; /* Prevent image overflow */
+            cursor: pointer;
+        }
+
+        .media img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            display: block; /* Fix whitespace issue */
+            margin: 0 auto; /* Center the image */
+        }
+
+        .media h3 {
+            margin-top: 10px;
+            font-size: 18px;
+            color: #333;
+            text-align: center;
+        }
+
+        .card {
+            display: none;
+        }
+
+        #videoPlayer {
+            width: calc(100% - 10px); /* Adjusted width to account for margins */
+            height: 0;
+            padding-top: 56.25%; /* 16:9 aspect ratio */
+            position: relative;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        #videoPlayer iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 5px;
+            margin: 5px;
+        }
+
+        #detailsCard {
+            margin: 5px; /* Added margin for all sides */
+        }
+
+        .details {
+            padding: 20px;
+            background-color: #262626;
+            border-top: 1px solid #ccc;
+            border-bottom-left-radius: 5px;
+            border-bottom-right-radius: 5px;
+        }
+
+        .details h2 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #e3e3e3;
+        }
+
+        .details p {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #e3e3e3;
+        }
+
+        #detailsPoster {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .btn-back {
+            display: block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+
+        .btn-back:hover {
+            background-color: #0056b3;
+        }
+
+        .movie-detail {
+            margin-bottom: 10px;
+        }
+
+        #latestMovies {
+            margin-top: 40px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        #latestMoviesList {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        #latestMoviesList .media {
+            width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Search for a Movie or TV Show</h1>
+    <form id="searchForm">
+        <label style="color: white;" for="searchQuery">Enter Movie/TV Show Title:</label>
+        <input type="text" id="searchQuery" name="searchQuery">
+        <button type="submit">Search</button>
+    </form>
+
+    <div id="latestMovies">
+        <h2>Latest Movies</h2>
+        <div id="latestMoviesList"></div>
+    </div>
+
+    <div id="searchResults"></div>
+
+    <div class="card" id="detailsCard">
+        <div id="videoPlayer"></div>
+        <div class="details" id="movieDetails">
+            <h2 id="detailsTitle"></h2>
+            <p class="movie-detail" id="detailsRating"></p>
+            <p class="movie-detail" id="detailsYear"></p>
+            <p class="movie-detail" id="detailsGenre"></p>
+            <p class="movie-detail" id="detailsPlot"></p>
+            <a href="#" class="btn-back" onclick="goBack()">Back to Search</a>
+        </div>
+        <img id="detailsPoster" src="" alt="">
+    </div>
+
+    <script>
+        document.getElementById("searchForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            var searchQuery = document.getElementById("searchQuery").value;
+            searchMovies(searchQuery);
+        });
+
+        function searchMovies(searchQuery) {
+            var urlMovie = "http://www.omdbapi.com/?apikey=bf1b7960&s=" + searchQuery + "&type=movie";
+            var urlSeries = "http://www.omdbapi.com/?apikey=bf1b7960&s=" + searchQuery + "&type=series";
+
+            Promise.all([fetch(urlMovie), fetch(urlSeries)])
+                .then(responses => Promise.all(responses.map(response => response.json())))
+                .then(data => {
+                    var movies = data[0].Search || [];
+                    var series = data[1].Search || [];
+                    displaySearchResults([...movies, ...series]);
+                    hideLatestMovies(); // Hide latest movies section when search results are displayed
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                });
+        }
+
+        function displaySearchResults(results) {
+            var searchResults = document.getElementById("searchResults");
+            searchResults.innerHTML = "";
+            results.forEach(result => {
+                var resultDiv = document.createElement("div");
+                resultDiv.classList.add("media");
+                var posterUrl = result.Poster === "N/A" ? "https://via.placeholder.com/300x450" : result.Poster;
+                resultDiv.innerHTML = `
+                    <img src="${posterUrl}" alt="${result.Title}" onclick="showDetails('${result.imdbID}')">
+                    <h3>${result.Title}</h3>
+                `;
+                searchResults.appendChild(resultDiv);
+            });
+        }
+
+        function showDetails(imdbId) {
+            var searchQueryInput = document.getElementById("searchQuery");
+            var searchForm = document.getElementById("searchForm");
+
+            searchResults.style.display = "none";
+            detailsCard.style.display = "block";
+
+            var url = "http://www.omdbapi.com/?apikey=bf1b7960&i=" + imdbId;
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Details Data:", data); // Log details data to console
+                    document.getElementById("detailsTitle").textContent = data.Title;
+                    document.getElementById("detailsPlot").textContent = data.Plot;
+                    document.getElementById("detailsRating").textContent = "IMDb Rating: " + data.imdbRating;
+                    document.getElementById("detailsYear").textContent = "Release Year: " + data.Year;
+                    document.getElementById("detailsGenre").textContent = "Genre: " + data.Genre;
+                    document.getElementById("detailsPoster").src = data.Poster;
+                    var videoPlayer = document.getElementById("videoPlayer");
+                    var videoUrl = data.Type === "movie" ?
+                        "https://vidsrc.to/embed/movie/" + imdbId :
+                        "https://vidsrc.to/embed/tv/" + imdbId;
+                    videoPlayer.innerHTML = `<iframe src="${videoUrl}" frameborder="0" allowfullscreen></iframe>`;
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                });
+
+            // Hide latest movies section
+            var latestMoviesSection = document.getElementById("latestMovies");
+            latestMoviesSection.style.display = "none";
+        }
+
+        function goBack() {
+            window.location.reload(); // Reload the page
+        }
+
+        function hideLatestMovies() {
+            var latestMoviesSection = document.getElementById("latestMovies");
+            latestMoviesSection.style.display = "none";
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            fetchLatestMovies();
+        });
+
+        function fetchLatestMovies() {
+            var latestMoviesUrl = "https://vidsrc.to/vapi/movie/new";
+            fetch(latestMoviesUrl)
+                .then(response => response.json())
+                .then(data => {
+                    displayLatestMovies(data.result.items);
+                })
+                .catch(error => {
+                    console.error("Error fetching latest movies:", error);
+                });
+        }
+
+        function displayLatestMovies(movies) {
+            var latestMoviesList = document.getElementById("latestMoviesList");
+            latestMoviesList.innerHTML = "";
+
+            movies.forEach(movie => {
+                console.log("IMDb ID:", movie.imdb_id); // Log IMDb ID to console
+                var movieDiv = document.createElement("div");
+                movieDiv.classList.add("media");
+                var imdbId = movie.imdb_id;
+                var posterUrl = "https://via.placeholder.com/300x450";
+                if (imdbId) {
+                    var omdbUrl = "http://www.omdbapi.com/?apikey=bf1b7960&i=" + imdbId;
+                    fetch(omdbUrl)
+                        .then(response => response.json())
+                        .then(data => {
+                            posterUrl = data.Poster;
+                            movieDiv.innerHTML = `
+                                <img src="${posterUrl}" alt="${movie.title}" onclick="showDetails('${imdbId}')"> <!-- Pass IMDb ID here -->
+                                <h3>${movie.title}</h3>
+                            `;
+                            latestMoviesList.appendChild(movieDiv);
+                        })
+                        .catch(error => {
+                            console.error("Error fetching movie details:", error);
+                        });
+                } else {
+                    movieDiv.innerHTML = `
+                        <img src="${posterUrl}" alt="${movie.title}" onclick="showDetails('${imdbId}')"> <!-- Pass IMDb ID here -->
+                        <h3>${movie.title}</h3>
+                    `;
+                    latestMoviesList.appendChild(movieDiv);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
