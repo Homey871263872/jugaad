@@ -211,8 +211,8 @@
         });
 
         function searchMovies(searchQuery) {
-            var urlMovie = "http://www.omdbapi.com/?apikey=bf1b7960&s=" + searchQuery + "&type=movie";
-            var urlSeries = "http://www.omdbapi.com/?apikey=bf1b7960&s=" + searchQuery + "&type=series";
+            var urlMovie = "https://www.omdbapi.com/?apikey=bf1b7960&s=" + searchQuery + "&type=movie";
+            var urlSeries = "https://www.omdbapi.com/?apikey=bf1b7960&s=" + searchQuery + "&type=series";
 
             Promise.all([fetch(urlMovie), fetch(urlSeries)])
                 .then(responses => Promise.all(responses.map(response => response.json())))
@@ -249,7 +249,7 @@
             searchResults.style.display = "none";
             detailsCard.style.display = "block";
 
-            var url = "http://www.omdbapi.com/?apikey=bf1b7960&i=" + imdbId;
+            var url = "https://www.omdbapi.com/?apikey=bf1b7960&i=" + imdbId;
             fetch(url)
                 .then(response => response.json())
                 .then(data => {
@@ -311,7 +311,7 @@
                 var imdbId = movie.imdb_id;
                 var posterUrl = "https://via.placeholder.com/300x450";
                 if (imdbId) {
-                    var omdbUrl = "http://www.omdbapi.com/?apikey=bf1b7960&i=" + imdbId;
+                    var omdbUrl = "https://www.omdbapi.com/?apikey=bf1b7960&i=" + imdbId;
                     fetch(omdbUrl)
                         .then(response => response.json())
                         .then(data => {
