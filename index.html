@@ -263,8 +263,8 @@
                     document.getElementById("detailsPoster").src = data.Poster;
                     var videoPlayer = document.getElementById("videoPlayer");
                     var videoUrl = data.Type === "movie" ?
-                        "https://vidsrc.me/embed/movie/" + imdbId :
-                        "https://vidsrc.me/embed/tv/" + imdbId;
+                        "https://player.smashy.stream/movie/" + imdbId :
+                        "https://player.smashy.stream/tv/" + imdbId;
                     videoPlayer.innerHTML = `<iframe src="${videoUrl}" frameborder="0" allowfullscreen></iframe>`;
                 })
                 .catch(error => {
