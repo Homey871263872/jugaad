@@ -264,7 +264,7 @@
                     var videoPlayer = document.getElementById("videoPlayer");
                     var videoUrl = data.Type === "movie" ?
                         "https://player.smashy.stream/movie/" + imdbId :
-                        "https://player.smashy.stream/tv/" + imdbId;
+                        "https://player.smashy.stream/tv/" + imdbId + "?s=1&e=1";
                     videoPlayer.innerHTML = `<iframe src="${videoUrl}" frameborder="0" allowfullscreen></iframe>`;
                 })
                 .catch(error => {
